@@ -1,0 +1,46 @@
+title                   = Protein MD simulation 
+; Run parameters
+integrator              = md        ; leap-frog integrator
+nsteps                  = 1500000000 ; 2 * 1500000000 = 3000000 ps (3000 ns)
+dt                      = 0.002     ; 2 fs
+; Output control
+nstenergy               = 5000      ; save energies every 10.0 ps
+nstlog                  = 10000     ; update log file every 50.0 ps
+nstxout-compressed      = 100000    ; save coordinates every 200.0 ps
+; Bond parameters
+continuation            = yes       ; continuing from NPT 
+constraint_algorithm    = lincs     ; holonomic constraints 
+constraints             = h-bonds   ; bonds to H are constrained
+lincs_iter              = 1         ; accuracy of LINCS
+lincs_order             = 4         ; also related to accuracy
+; Neighbor searching and vdW
+cutoff-scheme           = Verlet
+ns_type                 = grid      ; search neighboring grid cells
+nstlist                 = 20        ; largely irrelevant with Verlet
+rlist                   = 1.2
+vdwtype                 = cutoff
+vdw-modifier            = None      ; amber-specific 
+rvdw                    = 1.2       ; short-range van der waals cut-off, a99sb-disp specific
+; Electrostatics
+coulombtype             = PME       ; Particle Mesh Ewald for long-range electrostatics
+pme_order               = 4         ; cubic interpolation (GPUs only support this value)
+fourierspacing          = 0.16      ; grid spacing for FFT
+rcoulomb                = 1.2       ; short-range electrostatics cut-off, a99sb-disp specific
+; Temperature coupling
+tcoupl                  = V-rescale           ; modified Berendsen thermostat
+tau_t                   = 0.1 0.1             ; relaxation constant, in ps
+tc-grps                 = Protein Non-Protein ; two coupling groups - more accurate
+ref_t                   = 296 296             ; room temperature of the experiments
+; Pressure coupling
+pcoupl                  = Parrinello-Rahman ;
+pcoupltype              = isotropic ; uniform scaling of box vectors
+tau_p                   = 2.0       ; time constant, in ps
+ref_p                   = 1.0       ; reference pressure, in bar
+compressibility         = 4.5e-5    ; isothermal compressibility of water, bar^-1
+refcoord_scaling        = com
+; Periodic boundary conditions
+pbc                     = xyz       ; 3-D PBC
+; Dispersion correction is used for Amber
+DispCorr                = EnerPres 
+; Velocity generation
+gen_vel                 = no        ; velocity generation off after NVT 

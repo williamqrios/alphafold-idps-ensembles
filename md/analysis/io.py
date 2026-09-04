@@ -59,3 +59,51 @@ def process_dssp(
         }
     )
     return structure_df
+
+
+def load_exp_chemical_shifts(path: Path) -> tuple[pd.DataFrame, np.ndarray]:
+    """
+    Assumes CSV file with columns: res, atom_name, value
+    """
+    df = pd.read_csv(path)
+    available_shifts = df.atom_name.unique()
+
+    return df, available_shifts
+
+
+def load_chemical_shifts(
+    path: Path, available_shifts: np.ndarray, fraction_discarded: float = 0.0
+) -> pd.DataFrame:
+    """Loads estimated chemical shifts, filtering out atoms with no reported experimental data."""
+
+    # Use only chemical shifts that are available in experimental data
+    # available_shifts = self.cs_exp.atom_name.unique()
+    if "HA" in available_shifts:
+        # HA2 corresponds to glycine's other hydrogen alpha
+        available_shifts = np.append(available_shifts, "HA2")
+
+    cs_data = pd.read_pickle(path)
+    # Discard partion of the trajectory
+    mask = (cs_data.atom_name.isin(available_shifts)) & (
+        cs_data.time > cs_data.time.max() * fraction_discarded
+    )
+    cs_data = cs_data[mask].reset_index(drop=True).replace({"atom_name": {"HA2": "HA"}})
+    return cs_data
+
+
+
+def get_cs_per_frame(df_sim: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """
+    Formats dataframe of chemical shifts into a dictionary of dataframes, one for each atom type, with time as index and residues as columns.
+    """
+    output = {}
+    shift_types = df_sim.atom_name.unique()
+    for shift_type in shift_types:
+        df_sim_shift = (
+            df_sim[df_sim.atom_name == shift_type]
+            .drop(columns=["atom_name"])
+            .pivot_table(index="time", columns="res", values="value")
+            .reset_index()
+        )
+        output[shift_type] = df_sim_shift
+    return output

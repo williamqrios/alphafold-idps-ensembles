@@ -50,9 +50,9 @@ def main():
     protein_name = "p53n"
     conformation = "extended"
     forcefield = "a99disp"
-    rg_df = load_rg(f"{protein_name}/{conformation}/{forcefield}/rg.csv")
+    rg_df = load_rg(f"data/{protein_name}/{conformation}/{forcefield}/rg.csv")
     dssp_df = load_dssp(
-        f"{protein_name}/{conformation}/{forcefield}/dssp.npy",
+        f"data/{protein_name}/{conformation}/{forcefield}/dssp.npy",
         time_array=np.array(rg_df["time"].values),
     )
     helix_df = process_dssp(dssp_df, code="H", timeseries=True)

@@ -1,13 +1,15 @@
 import numpy as np
+import pandas as pd
 
 BLOCK_MUL = 5.0
-# Block size is BLOCK_MUL * tau_c
+# Block size is BLOCK_MUL * tau_c for the specific property
 
 
-def get_x_prod(t0: dict, data: dict) -> dict:
+def get_x_prod(t0: dict[str, float], data: dict[str, pd.DataFrame]) -> dict:
     """
+    t0: dictionary with conformations as keys and equilibration time as values
     data: dictionary with conformations as keys and time, variable of interest dataframe as values
-    Filters "X" in each trajectory based on the autocorrelation time
+    Filters "X" in each trajectory based on the equilibration time t0 for each conformation.
     """
     x_prod = {}
     for conf, item in data.items():
@@ -28,7 +30,7 @@ def get_x_prod(t0: dict, data: dict) -> dict:
     return x_prod
 
 
-def split_blocks(x: np.array, block_size: int, squared: bool = False) -> list:
+def split_blocks(x: np.array, block_size: int, squared: bool = False) -> list[float]:
     """
     Splits data into blocks based on the autocorrelation time.  Squared = True for Rg
     """
@@ -47,8 +49,8 @@ def split_blocks(x: np.array, block_size: int, squared: bool = False) -> list:
 
 
 def block_averaging(
-    blocks: list, weights: list | None = None, squared: bool = False
-) -> tuple:
+    blocks: list[float], weights: list[float] | None = None, squared: bool = False
+) -> tuple[float, float]:
     """
     Given a list of blocks, computes the mean and standard error of the mean of the block means.  Returns (mean, se).
     Formula for unbiased estimator of the standard error of the weighted mean taken from https://seismo.berkeley.edu/~kirchner/Toolkits/Toolkit_12.pdf "Case 1" where we want to give more weight to a set of points
@@ -78,8 +80,8 @@ def block_averaging(
 
 
 def block_bootstrapping(
-    blocks: list, bin_edges: np.ndarray, nboot: int = 1000
-) -> tuple:
+    blocks: list[float], bin_edges: np.ndarray, nboot: int = 1000
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     boot_counts = np.zeros((nboot, len(bin_edges) - 1))
     nb = len(blocks)
     for b in range(nboot):
@@ -95,7 +97,7 @@ def block_bootstrapping(
 
 def ensemble_average(
     x_prod: dict, taus: dict, col: str, squared: bool = False
-) -> tuple:
+) -> tuple[float, float, list[float], list[float]]:
     """Performs block averaging over concatenated trajectories taking into account the number of independent samples (number of blocks) as weights.
     x_prod: dictionary with conformations as keys and time, variable of interest dataframe as values
     taus: dictionary with conformations as keys corresponding tau_c as values (value specific to the observable of interest)
